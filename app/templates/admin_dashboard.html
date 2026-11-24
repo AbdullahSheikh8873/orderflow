@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Admin Dashboard</h1>
+<div class="nav-links" style="margin:8px 0 20px;">
+  <a href="/admin">Overview</a>
+  <a href="/admin/products">Products</a>
+  <a href="/admin/orders">Orders</a>
+  <a href="/admin/users">Customers</a>
+  <a href="/admin/events">Event Logs</a>
+</div>
+
+<div class="grid cols-4">
+  <div class="card stat-card"><span class="label">Total Orders</span><span class="value" id="s-total">–</span></div>
+  <div class="card stat-card"><span class="label">Pending</span><span class="value" id="s-pending">–</span></div>
+  <div class="card stat-card"><span class="label">Processing</span><span class="value" id="s-processing">–</span></div>
+  <div class="card stat-card"><span class="label">Confirmed</span><span class="value" id="s-confirmed">–</span></div>
+  <div class="card stat-card"><span class="label">Completed</span><span class="value" id="s-completed">–</span></div>
+  <div class="card stat-card"><span class="label">Cancelled</span><span class="value" id="s-cancelled">–</span></div>
+  <div class="card stat-card"><span class="label">Total Revenue</span><span class="value" id="s-revenue">–</span></div>
+</div>
+
+<div class="card" style="margin-top:24px;">
+  <h2>Recent Orders</h2>
+  <table id="recent-table">
+    <thead><tr><th>Order #</th><th>Customer</th><th>Status</th><th>Total</th><th>Placed</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  OrderFlow.requireAdmin();
+  (async () => {
+    try {
+      const stats = await OrderFlow.api("/api/admin/dashboard");
+      document.getElementById("s-total").textContent = stats.total_orders;
+      document.getElementById("s-pending").textContent = stats.pending_orders;
+      document.getElementById("s-processing").textContent = stats.processing_orders;
+      document.getElementById("s-confirmed").textContent = stats.confirmed_orders;
+      document.getElementById("s-completed").textContent = stats.completed_orders;
+      document.getElementById("s-cancelled").textContent = stats.cancelled_orders;
+      document.getElementById("s-revenue").textContent = OrderFlow.money(stats.total_revenue);
+
+      document.querySelector("#recent-table tbody").innerHTML = stats.recent_orders.map(o => `
+        <tr>
+          <td>${o.order_number}</td>
+          <td>User #${o.user_id}</td>
+          <td>${OrderFlow.badge(o.status)}</td>
+          <td>${OrderFlow.money(o.total_amount)}</td>
+          <td>${OrderFlow.formatDate(o.created_at)}</td>
+        </tr>
+      `).join("");
+    } catch (err) {
+      console.error(err);
+    }
+  })();
+</script>
+{% endblock %}

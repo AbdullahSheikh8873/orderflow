@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Create an Order</h1>
+<div id="alert-box"></div>
+
+<div class="card">
+  <h2>1. Choose products</h2>
+  <table id="product-table">
+    <thead><tr><th>Product</th><th>Price</th><th>Stock</th><th style="width:110px;">Quantity</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-top:20px;">
+  <h2>2. Shipping address</h2>
+  <div class="form-group">
+    <textarea id="shipping-address" rows="3" placeholder="Street, city, state, ZIP" required></textarea>
+  </div>
+</div>
+
+<div class="card" style="margin-top:20px;">
+  <div class="flex between">
+    <h2>Order total</h2>
+    <span class="price" id="order-total">$0.00</span>
+  </div>
+  <button class="btn" id="place-order-btn" style="width:100%; margin-top:10px;">Place Order</button>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  OrderFlow.requireAuth();
+  let products = [];
+
+  function recalcTotal() {
+    let total = 0;
+    document.querySelectorAll(".qty-input").forEach(input => {
+      const price = parseFloat(input.dataset.price);
+      const qty = parseInt(input.value || "0", 10);
+      total += price * qty;
+    });
+    document.getElementById("order-total").textContent = OrderFlow.money(total);
+  }
+
+  (async () => {
+    try {
+      products = await OrderFlow.api("/api/products?limit=100");
+      const tbody = document.querySelector("#product-table tbody");
+      tbody.innerHTML = products.map(p => `
+        <tr>
+          <td>${p.name}</td>
+          <td>${OrderFlow.money(p.price)}</td>
+          <td>${p.stock_quantity}</td>
+          <td><input type="number" min="0" max="${p.stock_quantity}" value="0" class="qty-input" data-product-id="${p.id}" data-price="${p.price}" /></td>
+        </tr>
+      `).join("");
+      document.querySelectorAll(".qty-input").forEach(el => el.addEventListener("input", recalcTotal));
+    } catch (err) {
+      OrderFlow.showAlert(document.getElementById("alert-box"), err.message);
+    }
+  })();
+
+  document.getElementById("place-order-btn").addEventListener("click", async () => {
+    const alertBox = document.getElementById("alert-box");
+    alertBox.innerHTML = "";
+
+    const items = [];
+    document.querySelectorAll(".qty-input").forEach(input => {
+      const qty = parseInt(input.value || "0", 10);
+      if (qty > 0) items.push({ product_id: parseInt(input.dataset.productId, 10), quantity: qty });
+    });
+    const shippingAddress = document.getElementById("shipping-address").value.trim();
+
+    if (items.length === 0) {
+      OrderFlow.showAlert(alertBox, "Select at least one product.");
+      return;
+    }
+    if (shippingAddress.length < 5) {
+      OrderFlow.showAlert(alertBox, "Please enter a valid shipping address.");
+      return;
+    }
+
+    try {
+      const order = await OrderFlow.api("/api/orders", {
+        method: "POST",
+        body: { shipping_address: shippingAddress, items },
+      });
+      window.location.href = `/orders/${order.id}`;
+    } catch (err) {
+      OrderFlow.showAlert(alertBox, err.message);
+    }
+  });
+</script>
+{% endblock %}

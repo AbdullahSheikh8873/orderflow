@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Customers</h1>
+<div class="nav-links" style="margin:8px 0 20px;">
+  <a href="/admin">Overview</a>
+  <a href="/admin/products">Products</a>
+  <a href="/admin/orders">Orders</a>
+  <a href="/admin/users" class="active">Customers</a>
+  <a href="/admin/events">Event Logs</a>
+</div>
+
+<div class="card">
+  <table id="users-table">
+    <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  OrderFlow.requireAdmin();
+  (async () => {
+    const users = await OrderFlow.api("/api/admin/users?limit=500");
+    document.querySelector("#users-table tbody").innerHTML = users.map(u => `
+      <tr>
+        <td>${u.name}</td>
+        <td>${u.email}</td>
+        <td>${u.role}</td>
+        <td>${u.is_active ? "Active" : "Inactive"}</td>
+        <td>${OrderFlow.formatDate(u.created_at)}</td>
+      </tr>
+    `).join("");
+  })();
+</script>
+{% endblock %}

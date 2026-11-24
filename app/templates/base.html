@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ title }} · OrderFlow</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <nav class="navbar" id="orderflow-nav"></nav>
+
+  <main class="container{% block container_class %}{% endblock %}">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">OrderFlow &middot; Event-driven Order Management System</footer>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    OrderFlow.renderNav("{{ request.url.path }}");
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

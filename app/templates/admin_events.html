@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Order Processing / Event Logs</h1>
+<p class="muted">Audit trail of every order-lifecycle event, mirroring what's stored in S3 and published to SNS.</p>
+<div class="nav-links" style="margin:8px 0 20px;">
+  <a href="/admin">Overview</a>
+  <a href="/admin/products">Products</a>
+  <a href="/admin/orders">Orders</a>
+  <a href="/admin/users">Customers</a>
+  <a href="/admin/events" class="active">Event Logs</a>
+</div>
+
+<div class="card">
+  <table id="events-table">
+    <thead><tr><th>Order</th><th>Event Type</th><th>Status</th><th>Created</th><th>Processed</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <div id="empty" class="empty-state" style="display:none;">No events recorded yet.</div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  OrderFlow.requireAdmin();
+  (async () => {
+    const events = await OrderFlow.api("/api/admin/events?limit=200");
+    if (events.length === 0) {
+      document.getElementById("empty").style.display = "block";
+      return;
+    }
+    document.querySelector("#events-table tbody").innerHTML = events.map(e => `
+      <tr>
+        <td><a href="/orders/${e.order_id}">Order #${e.order_id}</a></td>
+        <td>${e.event_type}</td>
+        <td>${e.status}</td>
+        <td>${OrderFlow.formatDate(e.created_at)}</td>
+        <td>${e.processed_at ? OrderFlow.formatDate(e.processed_at) : "—"}</td>
+      </tr>
+    `).join("");
+  })();
+</script>
+{% endblock %}

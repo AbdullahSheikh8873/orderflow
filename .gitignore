@@ -1,0 +1,28 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+*.db
+*.sqlite3
+.DS_Store
+dist/
+build/
+node_modules/
+
+# Lambda
+lambda/order_processor/package/
+*.zip
+lambda-env.json
+
+# Terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/terraform.tfvars
+# Backups / temp
+*.backup
+delete-markers.json

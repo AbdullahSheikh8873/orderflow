@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block container_class %} narrow{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>Log in</h1>
+  <div id="alert-box"></div>
+  <form id="login-form">
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" required />
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" required />
+    </div>
+    <button class="btn" type="submit" style="width:100%;">Log in</button>
+  </form>
+  <p class="muted" style="margin-top:16px;">No account? <a href="/register">Create one</a></p>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  document.getElementById("login-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const alertBox = document.getElementById("alert-box");
+    alertBox.innerHTML = "";
+    try {
+      const data = await OrderFlow.api("/api/auth/login", {
+        method: "POST",
+        auth: false,
+        body: {
+          email: document.getElementById("email").value,
+          password: document.getElementById("password").value,
+        },
+      });
+      OrderFlow.setSession(data.access_token, data.user);
+      window.location.href = data.user.role === "ADMIN" ? "/admin" : "/dashboard";
+    } catch (err) {
+      OrderFlow.showAlert(alertBox, err.message);
+    }
+  });
+</script>
+{% endblock %}

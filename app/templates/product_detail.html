@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="/products" class="muted">&larr; Back to products</a>
+<div class="card" style="margin-top:16px;" id="product-card">Loading...</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  const productId = {{ product_id }};
+  (async () => {
+    const card = document.getElementById("product-card");
+    try {
+      const p = await OrderFlow.api(`/api/products/${productId}`, { auth: false });
+      card.innerHTML = `
+        <h1>${p.name}</h1>
+        <p class="muted">${p.description || "No description provided."}</p>
+        <p class="price" style="font-size:1.4rem;">${OrderFlow.money(p.price)}</p>
+        <p class="stock">${p.stock_quantity > 0 ? p.stock_quantity + " units in stock" : "Out of stock"}</p>
+        <a class="btn" href="/orders/new">Order this product</a>
+      `;
+    } catch (err) {
+      card.innerHTML = `<div class="alert error">${err.message}</div>`;
+    }
+  })();
+</script>
+{% endblock %}

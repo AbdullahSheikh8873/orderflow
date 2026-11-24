@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="/orders" class="muted">&larr; Back to my orders</a>
+<div id="alert-box" style="margin-top:12px;"></div>
+
+<div class="card" style="margin-top:12px;" id="order-summary">Loading...</div>
+
+<div class="card" style="margin-top:20px;">
+  <h2>Items</h2>
+  <table id="items-table">
+    <thead><tr><th>Product</th><th>Quantity</th><th>Unit Price</th><th>Subtotal</th></tr></thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="card" style="margin-top:20px;">
+  <h2>Order Tracking</h2>
+  <table id="events-table">
+    <thead><tr><th>Event</th><th>Status</th><th>Occurred</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <div id="events-empty" class="empty-state" style="display:none;">No processing events yet. This order is still queued.</div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  OrderFlow.requireAuth();
+  const orderId = {{ order_id }};
+
+  function renderSummary(o) {
+    const canCancel = o.status === "PENDING";
+    document.getElementById("order-summary").innerHTML = `
+      <div class="flex between">
+        <div>
+          <h1 style="margin-bottom:4px;">${o.order_number}</h1>
+          <span class="muted">Placed ${OrderFlow.formatDate(o.created_at)}</span>
+        </div>
+        <div class="text-right">
+          ${OrderFlow.badge(o.status)}
+          <div class="price" style="margin-top:8px;">${OrderFlow.money(o.total_amount)}</div>
+        </div>
+      </div>
+      <p style="margin-top:16px;"><strong>Shipping address:</strong> ${o.shipping_address}</p>
+      ${canCancel ? '<button class="btn danger small" id="cancel-btn">Cancel Order</button>' : ""}
+    `;
+    const cancelBtn = document.getElementById("cancel-btn");
+    if (cancelBtn) {
+      cancelBtn.addEventListener("click", async () => {
+        if (!confirm("Cancel this order?")) return;
+        try {
+          await OrderFlow.api(`/api/orders/${orderId}/cancel`, { method: "POST" });
+          loadOrder();
+        } catch (err) {
+          OrderFlow.showAlert(document.getElementById("alert-box"), err.message);
+        }
+      });
+    }
+  }
+
+  async function loadOrder() {
+    try {
+      const o = await OrderFlow.api(`/api/orders/${orderId}`);
+      renderSummary(o);
+      document.querySelector("#items-table tbody").innerHTML = o.items.map(item => `
+        <tr>
+          <td>Product #${item.product_id}</td>
+          <td>${item.quantity}</td>
+          <td>${OrderFlow.money(item.unit_price)}</td>
+          <td>${OrderFlow.money(item.subtotal)}</td>
+        </tr>
+      `).join("");
+
+      const events = await OrderFlow.api(`/api/orders/${orderId}/events`);
+      if (events.length === 0) {
+        document.getElementById("events-empty").style.display = "block";
+      }
+      document.querySelector("#events-table tbody").innerHTML = events.map(e => `
+        <tr>
+          <td>${e.event_type}</td>
+          <td>${e.status}</td>
+          <td>${e.processed_at ? OrderFlow.formatDate(e.processed_at) : OrderFlow.formatDate(e.created_at)}</td>
+        </tr>
+      `).join("");
+    } catch (err) {
+      OrderFlow.showAlert(document.getElementById("alert-box"), err.message);
+    }
+  }
+
+  loadOrder();
+</script>
+{% endblock %}
