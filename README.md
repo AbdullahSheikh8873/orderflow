@@ -10,7 +10,9 @@ AWS services are used to decouple order creation from background processing:
 
 The project also includes **Docker**, **Amazon ECR**, **EC2**, **RDS PostgreSQL**, and **Terraform** for infrastructure provisioning and deployment.
 
----
+## Demo
+
+https://github.com/user-attachments/assets/c07e0d49-4f2e-4620-9ecd-a5d63551d0e1
 
 ## 1. Project Overview
 
