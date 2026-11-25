@@ -12,7 +12,7 @@ The project also includes **Docker**, **Amazon ECR**, **EC2**, **RDS PostgreSQL*
 
 ## Demo
 
-https://github.com/user-attachments/assets/c07e0d49-4f2e-4620-9ecd-a5d63551d0e1
+https://github.com/user-attachments/assets/2428ded4-e5d1-4bb6-b26c-278e85b17b87
 
 ## 1. Project Overview
 
